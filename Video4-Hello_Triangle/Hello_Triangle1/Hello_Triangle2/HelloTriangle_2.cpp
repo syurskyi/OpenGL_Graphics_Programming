@@ -7,7 +7,7 @@
 
 
 // Global Variables
-const char* APP_TITLE = "Introduction to Modern OpenGL - Hello Triangle";
+const char* APP_TITLE = "Introduction to Modern OpenGL - Hello Colored Triangle";
 const int gWindowWidth = 800;
 const int gWindowHeight = 600;
 GLFWwindow* gWindow = NULL;
@@ -17,17 +17,25 @@ GLFWwindow* gWindow = NULL;
 const GLchar* vertexShaderSrc =
 "#version 330 core\n"
 "layout (location = 0) in vec3 pos;"
+"layout (location = 1) in vec3 color;"
+"\n"
+"out vec3 vert_color;"
 "void main()"
 "{"
-"   gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);"
+"    vert_color = color;"
+"    gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);"
 "}";
+
 const GLchar* fragmentShaderSrc =
 "#version 330 core\n"
+"in vec3 vert_color;"
 "out vec4 frag_color;"
 "void main()"
 "{"
-"   frag_color = vec4(0.35f, 0.96f, 0.3f, 1.0f);"
+"    frag_color = vec4(vert_color, 1.0f);"
 "}";
+
+
 
 // Function prototypes
 void glfw_onKey(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -49,37 +57,48 @@ int main()
 
 	// Set up our quad
 
-	// 1. Set up an array of vertices for a triangle
-	//   (What is a vertex?)
+	// 1. Set up an array of vertices with position and color for a triangle
+	//   (Interleaved)
 	GLfloat vertices[] = {
-		 0.0f,  0.5f, 0.0f,	// Top
-		 0.5f, -0.5f, 0.0f,	// Right 
-		-0.5f, -0.5f, 0.0f,	// Left
+		// Position		  // Color
+		0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,	// Top vertex
+		0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,	// Bottom right vertex
+	   -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,	// Bottom left vertex
 	};
 
-	// 2. Set up buffers on the GPU
+	// 2. Set up buffer on the GPU
 	GLuint vbo, vao;
 
-	glGenBuffers(1, &vbo);					// Generate an empty vertex buffer on the GPU
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);		// "bind" or set as the current buffer we are working with
+	glGenBuffers(1, &vbo);														// Generate an empty vertex buffer on the GPU
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);											// "bind" or set as the current buffer we are working with
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);	// copy the data from CPU to GPU
 
 	// The vertex array object (VAO) is a little descriptor that defines which data from vertex buffer objects should be used as input 
-	// variables to vertex shaders. in our case - use our only VBO, and say 'every three floats is a variable'
-	// Modern OGL requires that we use a vertex array object
-	glGenVertexArrays(1, &vao);				// Tell OpenGL to create new Vertex Array Object
-	glBindVertexArray(vao);					// Make it the current one
+	// variables to vertex shaders.
+	glGenVertexArrays(1, &vao);									// Tell OpenGL to create new Vertex Array Object
+	glBindVertexArray(vao);
 
-	// Position attribute, "0"
+	// Position attribute, identified as "0"
 	glVertexAttribPointer(
-		0,							// Attribute index, "0".  The vertex shader should have layout "0" for the position of the vertex
-		3,							// Number of components of attribute "0". In this case 3 floats for x,y,z
-		GL_FLOAT,					// The data type of each component
-		GL_FALSE,					// Normalize component values to [-1, 1]? No, not for floating point component types
-		0,							// Stride, number of bytes between two instances of the attribute in the buffer. This buffer is "Tightly packed"
-		NULL);						// Offset inside the structure to find the attribute
+		0,									// Attribute index, "0".  The vertex shader should have layout "0" for the position of the vertex
+		3,									// Number of components of attribute "0". In this case 3 floats for x,y,z
+		GL_FLOAT,							// The data type of each component
+		GL_FALSE,							// Normalize component values to [-1, 1]?
+		sizeof(GLfloat) * 6,				// Stride, number of bytes between two instances of the attribute in the buffer
+		(GLvoid*)0);						// Offset inside the structure to find the attribute
 
-	glEnableVertexAttribArray(0);	// Enable the first attribute or attribute "0"
+	// Color attribute, identified as "1"
+	glVertexAttribPointer(
+		1,									// Attribute index, "0".  The vertex shader should have layout "0" for the position of the vertex
+		3,									// Number of components of attribute "0". In this case 3 floats for x,y,z
+		GL_FLOAT,							// The data type of each component
+		GL_FALSE,							// Normalize component values to [-1, 1]?
+		sizeof(GLfloat) * 6,				// Stride, number of bytes between two instances of the attribute in the buffer
+		(GLvoid*)(sizeof(GLfloat) * 3));	// Offset inside the structure to find the attribute
+
+	glEnableVertexAttribArray(0);			// Enable attribute "0"
+	glEnableVertexAttribArray(1);			// Enable attribute "1"
+
 
 	// 3. Create vertex shader
 	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
@@ -97,7 +116,7 @@ int main()
 	}
 
 	// 4. Create fragment shader
-	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+	GLint fs = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fs, 1, &fragmentShaderSrc, NULL);
 	glCompileShader(fs);
 
@@ -120,7 +139,7 @@ int main()
 	if (!result)
 	{
 		glGetProgramInfoLog(shaderProgram, sizeof(infoLog), NULL, infoLog);
-		std::cout << "Error! Shader program linker failure " << infoLog << std::endl;
+		std::cout << "Error! Shader program linker failure. " << infoLog << std::endl;
 	}
 
 	// Clean up shaders, do not need them anymore since they are linked to a shader program
@@ -139,10 +158,10 @@ int main()
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// Render the triangle
+		// Render the quad (two triangles
 		glUseProgram(shaderProgram);
 		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, 3); // draw points 0-2 from the currently bound VAO with current in-use shader
 		glBindVertexArray(0);
 
 

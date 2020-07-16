@@ -1,0 +1,6 @@
+﻿LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+  Generating code
+  All 106 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+glew32s.lib(glew.obj) : warning LNK4099: PDB 'vc120.pdb' was not found with 'glew32s.lib(glew.obj)' or at 'E:\syurskyi\VisualStudioProjects\OpenGL\OpenGL_Graphics_Programming\Video4-Hello_Triangle\Hello_Triangle1\Hello_Triangle3\bin\vc120.pdb'; linking object as if no debug info
+  Hello_Triangle3.vcxproj -> E:\syurskyi\VisualStudioProjects\OpenGL\OpenGL_Graphics_Programming\Video4-Hello_Triangle\Hello_Triangle1\Hello_Triangle3\.\bin\Hello_Triangle3.exe
